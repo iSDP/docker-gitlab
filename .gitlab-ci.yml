@@ -1,5 +1,22 @@
-image: docker:dind
-
+variables:
+  DOCKER_DRIVER: "overlay2"
+  VERSION: "10.7.3"
+  GITLAB_VERSION: "10.7.3"
+  RUBY_VERSION: "2.3"
+  GOLANG_VERSION: "1.9.5"
+  GITLAB_SHELL_VERSION: "7.1.2"
+  GITLAB_WORKHORSE_VERSION: "4.2.0"
+  GITLAB_PAGES_VERSION: "0.9.1"
+  GITALY_SERVER_VERSION: "0.100.0"
 deploy:
+  image: docker:git
+  services:
+    - docker:dind
   script:
-    - ci/gitlab
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:latest
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF
+    - docker push $CI_REGISTRY_IMAGE:latest
+  tags:
+    - docker
